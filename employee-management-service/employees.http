@@ -1,0 +1,76 @@
+
+### Get all employees
+GET http://localhost:8080/api/employees
+
+### Get employee 1
+GET http://localhost:8080/api/employees/1
+
+### Create an employee
+POST http://localhost:8080/api/employees
+Content-Type: application/json
+
+{
+  "name": "Amit Roy",
+  "department": "Finance",
+  "salary": 65000
+}
+
+### Create an employee
+POST http://localhost:8080/api/employees
+Content-Type: application/json
+
+{
+  "name": "Priya Das",
+  "department": "HR",
+  "salary": 60000
+}
+
+### Create an employee
+
+POST http://localhost:8080/api/employees
+Content-Type: application/json
+
+{
+  "name": "",
+  "department": "Engineering",
+  "salary": -1
+}
+
+### Update employee 1
+PUT http://localhost:8080/api/employees/1
+Content-Type: application/json
+
+{
+  "name": "Rahul Sharma",
+  "department": "Platform Engineering",
+  "salary": 85000
+}
+
+### Delete employee 2
+DELETE http://localhost:8080/api/employees/2
+
+### Get by page
+GET http://localhost:8080/api/employees
+###
+GET http://localhost:8080/api/employees?page=0&size=5
+###
+GET http://localhost:8080/api/employees?page=1&size=5
+###
+GET http://localhost:8080/api/employees?page=0&size=10&sortBy=name&direction=asc
+###
+GET http://localhost:8080/api/employees?page=0&size=10&sortBy=salary&direction=desc
+
+### Search by name
+GET http://localhost:8080/api/employees?search=rahul
+
+### Filter by department
+GET http://localhost:8080/api/employees?department=Engineering
+
+### Minimum salary
+GET http://localhost:8080/api/employees?minSalary=90000
+
+### Salary range
+GET http://localhost:8080/api/employees?minSalary=90000&maxSalary=130000
+
+### Search, Filter, Pagination combined
+GET http://localhost:8080/api/employees?page=0&size=5&search=rahul&department=Engineering&minSalary=80000&maxSalary=100000&sortBy=salary&direction=desc

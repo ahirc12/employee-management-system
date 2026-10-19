@@ -1,0 +1,312 @@
+<div class="min-h-screen bg-slate-50 p-6 md:p-10">
+    <div class="mx-auto max-w-7xl">
+        <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-wider text-indigo-600">
+                    Workforce management
+                </p>
+                <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+                    Employees
+                </h1>
+                <p class="mt-2 text-slate-500">
+                    Manage your employee directory in one place.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <button type="button"
+                    class="rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    (click)="loadEmployees()" [disabled]="loading()">
+                    Refresh employees
+                </button>
+
+                <button type="button"
+                    class="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-indigo-700"
+                    (click)="openCreateForm()">
+                    + Add employee
+                </button>
+            </div>
+        </header>
+
+        <section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p class="text-sm font-medium text-slate-500">Matching employees</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">
+                    {{ totalEmployees() }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p class="text-sm font-medium text-slate-500">Departments on page</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">
+                    {{ departmentCount() }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p class="text-sm font-medium text-slate-500">Average salary on page</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">
+                    {{ averageSalary() | currency:'INR':'symbol':'1.0-2' }}
+                </p>
+            </div>
+        </section>
+
+        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 p-5">
+                <div class="mb-5">
+                    <h2 class="text-lg font-semibold text-slate-900">
+                        Employee directory
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                        Search, filter, sort, and browse employees.
+                    </p>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <label class="block">
+                        <span class="mb-1.5 block text-sm font-medium text-slate-700">
+                            Search by name
+                        </span>
+                        <input type="search" placeholder="Enter employee name..." aria-label="Search employees by name"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            [value]="searchTerm()" (input)="onSearch($event)" />
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1.5 block text-sm font-medium text-slate-700">
+                            Department
+                        </span>
+                        <input type="text" placeholder="Exact department name" aria-label="Filter by department"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            [value]="departmentFilter()" (change)="onDepartmentChange($event)" />
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1.5 block text-sm font-medium text-slate-700">
+                            Minimum salary
+                        </span>
+                        <input type="number" min="0" placeholder="No minimum" aria-label="Minimum salary"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            [value]="minSalary() ?? ''" (change)="onMinSalaryChange($event)" />
+                    </label>
+
+                    <label class="block">
+                        <span class="mb-1.5 block text-sm font-medium text-slate-700">
+                            Maximum salary
+                        </span>
+                        <input type="number" min="0" placeholder="No maximum" aria-label="Maximum salary"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            [value]="maxSalary() ?? ''" (change)="onMaxSalaryChange($event)" />
+                    </label>
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-sm text-slate-500">
+                        {{ totalElements() }} matching employee(s)
+                    </p>
+                    <button type="button"
+                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        (click)="clearFilters()">
+                        Clear filters
+                    </button>
+                </div>
+            </div>
+
+            @if (loading()) {
+            <div class="p-10 text-center text-slate-500" role="status">
+                Loading employees...
+            </div>
+            } @else if (error()) {
+            <div class="p-10 text-center">
+                <p role="alert" class="font-medium text-red-600">
+                    {{ error() }}
+                </p>
+                <button type="button"
+                    class="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                    (click)="loadEmployees()">
+                    Try again
+                </button>
+            </div>
+            } @else if (filteredEmployees().length === 0) {
+            <div class="p-10 text-center">
+                <p class="font-semibold text-slate-800">No employees found</p>
+                <p class="mt-1 text-sm text-slate-500">
+                    Try changing your search or filters.
+                </p>
+            </div>
+            } @else {
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[700px] text-left text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                        <tr>
+                            <th scope="col" class="px-6 py-4">
+                                <button type="button" class="font-semibold hover:text-indigo-600"
+                                    (click)="toggleSort('name')">
+                                    Employee
+                                    @if (sortBy() === 'name') {
+                                    {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                                    }
+                                </button>
+                            </th>
+                            <th scope="col" class="px-6 py-4">
+                                <button type="button" class="font-semibold hover:text-indigo-600"
+                                    (click)="toggleSort('department')">
+                                    Department
+                                    @if (sortBy() === 'department') {
+                                    {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                                    }
+                                </button>
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-right">
+                                <button type="button" class="font-semibold hover:text-indigo-600"
+                                    (click)="toggleSort('salary')">
+                                    Salary
+                                    @if (sortBy() === 'salary') {
+                                    {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                                    }
+                                </button>
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-right font-semibold">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100">
+                        @for (employee of filteredEmployees(); track employee.id) {
+                        <tr class="transition hover:bg-slate-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
+                                        {{ employee.name.charAt(0).toUpperCase() }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-900">
+                                            <a class="hover:text-indigo-600" [routerLink]="['/employees', employee.id]">
+                                                {{ employee.name }}
+                                            </a>
+                                        </p>
+                                        <p class="mt-1 text-xs text-slate-500">
+                                            ID: {{ employee.id }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                                    {{ employee.department }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-4 text-right font-medium text-slate-900">
+                                {{ employee.salary | currency:'INR':'symbol':'1.0-2' }}
+                            </td>
+
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-4">
+                                    <button type="button" class="font-medium text-indigo-600 hover:text-indigo-800"
+                                        [attr.aria-label]="'Edit ' + employee.name" (click)="openEditForm(employee)">
+                                        Edit
+                                    </button>
+                                    <button type="button" class="font-medium text-red-600 hover:text-red-800"
+                                        [attr.aria-label]="'Delete ' + employee.name" (click)="requestDelete(employee)">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div
+                class="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3 text-sm text-slate-600">
+                    <label for="page-size">Rows per page</label>
+                    <select id="page-size" class="rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        [value]="pageSize()" (change)="onPageSizeChange($event)">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span>
+                        Showing
+                        {{ currentPage() * pageSize() + 1 }}–{{ currentPage() * pageSize() + filteredEmployees().length
+                        }}
+                        of {{ totalElements() }}
+                    </span>
+                </div>
+
+                <nav class="flex items-center gap-2" aria-label="Employee pages">
+                    <button type="button"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        [disabled]="currentPage() === 0 || loading()" (click)="goToPage(currentPage() - 1)">
+                        Previous
+                    </button>
+
+                    <span class="px-2 text-sm text-slate-600">
+                        Page {{ currentPage() + 1 }} of {{ totalPages() }}
+                    </span>
+
+                    <button type="button"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        [disabled]="currentPage() + 1 >= totalPages() || loading()"
+                        (click)="goToPage(currentPage() + 1)">
+                        Next
+                    </button>
+                </nav>
+            </div>
+            }
+        </section>
+    </div>
+</div>
+
+@if (formOpen()) {
+<app-employee-form [employee]="selectedEmployee()" [saveError]="saveError()" [fieldErrors]="fieldErrors()"
+    [saving]="saving()" (fieldErrorCleared)="clearFieldError($event)" (saved)="saveEmployee($event)"
+    (cancelled)="closeForm()" />
+}
+
+@if (employeeToDelete(); as employee) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
+    <section role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div class="mb-4 flex size-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <span class="text-2xl">!</span>
+        </div>
+
+        <h2 id="delete-dialog-title" class="text-xl font-bold text-slate-900">
+            Delete employee?
+        </h2>
+
+        <p id="delete-dialog-description" class="mt-2 text-sm leading-6 text-slate-600">
+            Are you sure you want to delete <strong>{{ employee.name }}</strong>?
+            This action cannot be undone.
+        </p>
+
+        @if (deleteError()) {
+        <p role="alert" class="mt-4 text-sm text-red-600">
+            {{ deleteError() }}
+        </p>
+        }
+
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button"
+                class="rounded-lg border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                [disabled]="deleting()" (click)="cancelDelete()">
+                Cancel
+            </button>
+
+            <button type="button"
+                class="rounded-lg bg-red-600 px-4 py-2.5 font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                [disabled]="deleting()" (click)="confirmDelete()">
+                {{ deleting() ? 'Deleting...' : 'Delete employee' }}
+            </button>
+        </div>
+    </section>
+</div>
+}
